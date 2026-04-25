@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>English Verb Challenge</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f4f0;
+      --surface: #ffffff;
+      --text: #1a1a1a;
+      --muted: #6b6b6b;
+      --border: rgba(0,0,0,0.12);
+      --border-mid: rgba(0,0,0,0.22);
+      --radius-md: 10px;
+      --radius-lg: 16px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    #app { width: 100%; max-width: 420px; }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ── HOME ── */
+    .app-header { margin-bottom: 2rem; }
+    .app-eyebrow {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+      color: var(--muted); text-transform: uppercase; margin-bottom: 6px;
+    }
+    .app-title { font-size: 32px; font-weight: 700; color: var(--text); line-height: 1.15; }
+    .app-subtitle { font-size: 14px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+
+    .level-btn {
+      width: 100%; padding: 1.1rem 1.25rem; margin-bottom: 12px;
+      border-radius: var(--radius-lg); border: 1px solid var(--border);
+      background: var(--surface); cursor: pointer;
+      display: flex; align-items: center; gap: 14px;
+      transition: transform 0.13s, box-shadow 0.13s; text-align: left;
+    }
+    .level-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); border-color: var(--border-mid); }
+    .level-btn:active { transform: scale(0.98); }
+
+    .level-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
+    }
+    .icon-b { background: #e6f3d4; }
+    .icon-i { background: #faebd7; }
+    .icon-a { background: #fce4ee; }
+
+    .level-info h3 { font-size: 16px; font-weight: 600; color: var(--text); }
+    .level-info p  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* ── QUIZ ── */
+    .top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .back-link {
+      font-size: 13px; color: var(--muted); cursor: pointer;
+      background: none; border: none; padding: 4px 0; font-family: inherit;
+    }
+    .back-link:hover { color: var(--text); }
+
+    .score-pill {
+      font-size: 13px; font-weight: 600; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 99px; padding: 4px 14px;
+      color: var(--text);
+    }
+
+    .progress-wrap { background: #e0ddd6; border-radius: 99px; height: 5px; overflow: hidden; margin-bottom: 1.25rem; }
+    .progress-fill { height: 100%; border-radius: 99px; transition: width 0.45s ease; width: 0%; }
+    .pfill-b { background: #4a8f1a; }
+    .pfill-i { background: #c07d18; }
+    .pfill-a { background: #c44070; }
+
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      padding: 3px 12px; border-radius: 99px; letter-spacing: 0.04em;
+      margin-bottom: 10px;
+    }
+    .badge-b { background: #e6f3d4; color: #2e6010; }
+    .badge-i { background: #faebd7; color: #8a5510; }
+    .badge-a { background: #fce4ee; color: #943060; }
+
+    .q-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 1.5rem 1.25rem; margin-bottom: 1rem;
+      animation: pop 0.25s ease both;
+    }
+    @keyframes pop {
+      0%  { transform: scale(0.92); opacity: 0; }
+      65% { transform: scale(1.03); }
+      100%{ transform: scale(1);    opacity: 1; }
+    }
+
+    .tense-tag {
+      font-size: 11px; font-weight: 600; color: var(--muted);
+      letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px;
+    }
+    .sentence {
+      font-size: 21px; font-weight: 600; color: var(--text);
+      line-height: 1.55;
+    }
+    .blank {
+      display: inline-block; min-width: 80px;
+      border-bottom: 2.5px solid #999; color: transparent;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 12px; line-height: 1.4; }
+
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .opt-btn {
+      padding: 0.85rem 0.5rem; border-radius: var(--radius-md);
+      border: 1.5px solid var(--border-mid); background: var(--surface);
+      cursor: pointer; font-size: 16px; font-weight: 600; color: var(--text);
+      transition: background 0.1s, border-color 0.1s, transform 0.08s;
+      font-family: inherit;
+    }
+    .opt-btn:hover:not(:disabled) { background: #f0ede8; }
+    .opt-btn:active:not(:disabled) { transform: scale(0.96); }
+    .opt-btn.correct { background: #e6f3d4; border-color: #4a8f1a; color: #2e6010; }
+    .opt-btn.wrong   { background: #fce8e8; border-color: #d94040; color: #a02020; }
+    .opt-btn:disabled { cursor: default; }
+
+    .feedback {
+      font-size: 14px; font-weight: 500; text-align: center;
+      padding: 0.75rem 1rem; border-radius: var(--radius-md);
+      min-height: 44px; line-height: 1.4;
+    }
+    .feedback.correct { background: #e6f3d4; color: #2e6010; }
+    .feedback.wrong   { background: #fce8e8; color: #a02020; }
+
+    .next-btn {
+      width: 100%; padding: 0.9rem; border-radius: var(--radius-md);
+      border: none; cursor: pointer; font-size: 16px; font-weight: 600;
+      color: #fff; margin-top: 12px; font-family: inherit;
+      transition: opacity 0.15s, transform 0.1s;
+      display: none;
+    }
+    .next-btn.visible { display: block; }
+    .next-btn:active { transform: scale(0.98); }
+    .nbtn-b { background: #3b7014; }
+    .nbtn-i { background: #96620e; }
+    .nbtn-a { background: #943060; }
+
+    /* ── RESULTS ── */
+    .results-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 2.5rem 1.5rem; text-align: center;
+      margin-bottom: 14px;
+    }
+    .results-label { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+    .results-score { font-size: 64px; font-weight: 700; line-height: 1; }
+    .results-outof { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .results-msg { font-size: 16px; font-weight: 500; color: var(--text); margin-top: 1.25rem; line-height: 1.4; }
+
+    .stars { font-size: 28px; letter-spacing: 4px; margin-top: 1rem; }
+
+    .replay-btn {
+      width: 100%; padding: 0.9rem; border-radius: var(--radius-md);
+      border: none; cursor: pointer; font-size: 16px; font-weight: 600;
+      color: #fff; margin-bottom: 10px; font-family: inherit;
+      transition: transform 0.1s;
+    }
+    .replay-btn:active { transform: scale(0.98); }
+    .home-btn {
+      width: 100%; padding: 0.9rem; border-radius: var(--radius-md);
+      border: 1px solid var(--border-mid); cursor: pointer;
+      font-size: 16px; font-weight: 500; background: var(--surface);
+      color: var(--text); font-family: inherit; transition: background 0.1s;
+    }
+    .home-btn:hover { background: #f0ede8; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME -->
+  <div id="home" class="screen active">
+    <div class="app-header">
+      <p class="app-eyebrow">English Practice</p>
+      <h1 class="app-title">Verb<br>Challenge</h1>
+      <p class="app-subtitle">Choose your level and complete the sentences with the correct verb form.</p>
+    </div>
+
+    <button class="level-btn" onclick="startLevel('beginner')">
+      <div class="level-icon icon-b">🌱</div>
+      <div class="level-info">
+        <h3>Beginner</h3>
+        <p>Present Simple · 5 questions</p>
+      </div>
+    </button>
+
+    <button class="level-btn" onclick="startLevel('intermediate')">
+      <div class="level-icon icon-i">⚡</div>
+      <div class="level-info">
+        <h3>Intermediate</h3>
+        <p>Past Simple · 5 questions</p>
+      </div>
+    </button>
+
+    <button class="level-btn" onclick="startLevel('advanced')">
+      <div class="level-icon icon-a">🔥</div>
+      <div class="level-info">
+        <h3>Advanced</h3>
+        <p>Future &amp; Perfect · 5 questions</p>
+      </div>
+    </button>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quiz" class="screen">
+    <div class="top-bar">
+      <button class="back-link" onclick="goHome()">← Levels</button>
+      <span id="score-pill" class="score-pill">0 / 5</span>
+    </div>
+    <div class="progress-wrap">
+      <div id="prog-fill" class="progress-fill pfill-b"></div>
+    </div>
+    <div id="badge-wrap"></div>
+    <div class="q-card" id="q-card">
+      <p class="tense-tag" id="tense-tag"></p>
+      <p class="sentence" id="sentence-text"></p>
+      <p class="hint" id="hint-text"></p>
+    </div>
+    <div class="options-grid" id="options-grid"></div>
+    <div id="feedback" class="feedback"></div>
+    <button id="next-btn" class="next-btn" onclick="nextQ()">Next →</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results" class="screen">
+    <div class="results-card">
+      <p class="results-label">Your Score</p>
+      <p class="results-score" id="final-score"></p>
+      <p class="results-outof">out of 5 questions</p>
+      <div class="stars" id="stars"></div>
+      <p class="results-msg" id="result-msg"></p>
+    </div>
+    <button class="replay-btn" id="replay-btn" onclick="replay()">Try again ↺</button>
+    <button class="home-btn" onclick="goHome()">Choose another level</button>
+  </div>
+
+</div>
+
+<script>
+const DATA = {
+  beginner: {
+    label: 'Beginner', tense: 'Present Simple',
+    pfill: 'pfill-b', nbtn: 'nbtn-b', badge: 'badge-b',
+    qs: [
+      { s: 'I ___ to the park every Sunday.',          a: 'go',     opts: ['go','goes','went','gone'],        hint: 'Subject: I  →  use the base form', verb: 'GO' },
+      { s: 'She ___ an apple every morning.',           a: 'eats',   opts: ['eat','eats','ate','eaten'],       hint: '3rd person singular (she)  →  add -s', verb: 'EAT' },
+      { s: 'We ___ five kilometers on Mondays.',        a: 'run',    opts: ['run','runs','ran','running'],     hint: 'Subject: We  →  use the base form', verb: 'RUN' },
+      { s: 'He ___ in his notebook during class.',      a: 'writes', opts: ['write','writes','wrote','written'],hint: '3rd person singular (he)  →  add -s', verb: 'WRITE' },
+      { s: 'They ___ English at school.',               a: 'speak',  opts: ['speak','speaks','spoke','speaking'],hint: 'Subject: They  →  use the base form', verb: 'SPEAK' }
+    ]
+  },
+  intermediate: {
+    label: 'Intermediate', tense: 'Past Simple',
+    pfill: 'pfill-i', nbtn: 'nbtn-i', badge: 'badge-i',
+    qs: [
+      { s: 'Last Saturday, I ___ to the beach with my family.', a: 'went',  opts: ['go','going','went','gone'],          hint: 'Past simple of GO is irregular: went', verb: 'GO' },
+      { s: 'She ___ all the pizza at the party.',               a: 'ate',   opts: ['eat','eats','ate','eaten'],           hint: 'Past simple of EAT is irregular: ate', verb: 'EAT' },
+      { s: 'He ___ a marathon last year.',                      a: 'ran',   opts: ['run','runs','ran','running'],         hint: 'Past simple of RUN is irregular: ran', verb: 'RUN' },
+      { s: 'My sister ___ a poem for her teacher yesterday.',   a: 'wrote', opts: ['write','writes','wrote','written'],   hint: 'Past simple of WRITE is irregular: wrote', verb: 'WRITE' },
+      { s: 'The students ___ to the principal after class.',    a: 'spoke', opts: ['speak','spoke','spoken','speaking'],  hint: 'Past simple of SPEAK is irregular: spoke', verb: 'SPEAK' }
+    ]
+  },
+  advanced: {
+    label: 'Advanced', tense: 'Future & Perfect',
+    pfill: 'pfill-a', nbtn: 'nbtn-a', badge: 'badge-a',
+    qs: [
+      { s: "By the time you arrive, she will have ___ to the airport.",      a: 'gone',   opts: ['go','went','gone','going'],           hint: 'Future perfect: will have + past participle', verb: 'GO' },
+      { s: "If I hadn't ___ so much, I wouldn't feel sick now.",             a: 'eaten',  opts: ['eat','ate','eating','eaten'],          hint: 'Third conditional: had + past participle', verb: 'EAT' },
+      { s: "She has ___ every day this month to prepare for the race.",      a: 'run',    opts: ['ran','run','running','runs'],          hint: 'Present perfect: has + past participle (run → run)', verb: 'RUN' },
+      { s: "The author will have ___ three novels by next year.",            a: 'written', opts: ['write','wrote','writing','written'],  hint: 'Future perfect: will have + past participle', verb: 'WRITE' },
+      { s: "He has ___ four languages since he was a child.",               a: 'spoken', opts: ['speak','spoke','speaking','spoken'],   hint: 'Present perfect: has + past participle', verb: 'SPEAK' }
+    ]
+  }
+};
+
+let cur = { level: null, qi: 0, score: 0, answered: false };
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function goHome() { show('home'); }
+
+function startLevel(level) {
+  cur = { level, qi: 0, score: 0, answered: false };
+  show('quiz');
+  renderQ();
+}
+
+function renderQ() {
+  const lv = DATA[cur.level];
+  const q  = lv.qs[cur.qi];
+  cur.answered = false;
+
+  document.getElementById('tense-tag').textContent = lv.tense + '  ·  ' + q.verb;
+  document.getElementById('badge-wrap').innerHTML = '<span class="badge ' + lv.badge + '">' + lv.label + '</span>';
+  document.getElementById('hint-text').textContent = '💡 ' + q.hint;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('score-pill').textContent = cur.score + ' / 5';
+
+  const fill = document.getElementById('prog-fill');
+  fill.className = 'progress-fill ' + lv.pfill;
+  fill.style.width = (cur.qi / lv.qs.length * 100) + '%';
+
+  const nb = document.getElementById('next-btn');
+  nb.className = 'next-btn ' + lv.nbtn;
+
+  const parts = q.s.split('___');
+  document.getElementById('sentence-text').innerHTML =
+    parts[0] + '<span class="blank" id="blank-el">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>' + (parts[1] || '');
+
+  const shuffled = [...q.opts].sort(() => Math.random() - 0.5);
+  document.getElementById('options-grid').innerHTML = shuffled.map(o =>
+    '<button class="opt-btn" onclick="choose(this,\'' + o + '\')">' + o + '</button>'
+  ).join('');
+
+  const card = document.getElementById('q-card');
+  card.style.animation = 'none';
+  void card.offsetWidth;
+  card.style.animation = '';
+}
+
+function choose(btn, val) {
+  if (cur.answered) return;
+  cur.answered = true;
+  const q = DATA[cur.level].qs[cur.qi];
+  const ok = val === q.a;
+  if (ok) cur.score++;
+
+  document.querySelectorAll('.opt-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === q.a) b.classList.add('correct');
+  });
+  if (!ok) btn.classList.add('wrong');
+
+  const blank = document.getElementById('blank-el');
+  blank.textContent = ' ' + q.a + ' ';
+  blank.style.color        = ok ? '#2e6010' : '#a02020';
+  blank.style.borderColor  = ok ? '#4a8f1a' : '#d94040';
+
+  const fb = document.getElementById('feedback');
+  fb.textContent = ok ? '✅ Correct! Well done.' : '❌ Not quite. The answer is: ' + q.a;
+  fb.className   = 'feedback ' + (ok ? 'correct' : 'wrong');
+
+  document.getElementById('score-pill').textContent = cur.score + ' / 5';
+  document.getElementById('prog-fill').style.width = ((cur.qi + 1) / 5 * 100) + '%';
+
+  const nb = document.getElementById('next-btn');
+  nb.textContent = cur.qi < 4 ? 'Next →' : 'See Results 🎉';
+  nb.classList.add('visible');
+}
+
+function nextQ() {
+  cur.qi++;
+  if (cur.qi >= 5) { showResults(); } else { renderQ(); }
+}
+
+function showResults() {
+  show('results');
+  const s = cur.score;
+  const scoreEl = document.getElementById('final-score');
+  scoreEl.textContent = s + '/5';
+  scoreEl.style.color = s >= 4 ? '#2e6010' : s >= 2 ? '#96620e' : '#a02020';
+
+  const starCounts = [1, 1, 2, 3, 3, 3];
+  document.getElementById('stars').textContent = '⭐'.repeat(starCounts[s] || 1);
+
+  const msgs = [
+    "Keep going! Practice makes perfect.",
+    "Good start! Review the verb forms and try again.",
+    "Getting there! A bit more practice and you'll nail it.",
+    "Nice work! You're almost there.",
+    "Great job! Only one mistake.",
+    "Perfect score! Outstanding! 🎉"
+  ];
+  document.getElementById('result-msg').textContent = msgs[s];
+
+  const rb = document.getElementById('replay-btn');
+  rb.className = 'replay-btn ' + DATA[cur.level].nbtn;
+}
+
+function replay() { startLevel(cur.level); }
+</script>
+</body>
+</html>
